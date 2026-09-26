@@ -15,11 +15,8 @@ for pkg_dir in "${packages[@]}"; do
   full_path="$root/$pkg_dir"
   echo "Checking packed files for $pkg_dir..."
   
-  # Run npm pack --dry-run --json and parse files
-  files_json=$(npm pack --dry-run --json "$full_path")
-  
-  # Extract file paths from the json array
-  file_list=$(echo "$files_json" | jq -r '.[0].files[].path')
+  # Run npm pack --dry-run --json and parse files without jq
+  file_list=$(npm pack --dry-run --json "$full_path" | node -p "JSON.parse(require('fs').readFileSync(0))[0].files.map(f=>f.path).join('\n')")
   
   while IFS= read -r file; do
     [[ -z "$file" ]] && continue
