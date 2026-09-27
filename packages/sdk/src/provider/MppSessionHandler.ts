@@ -106,6 +106,8 @@ export function createMppSessionHandler(opts: MppSessionHandlerOptions): Request
   // Set once a session is settled via DELETE so teardown handlers don't
   // re-flag an already-closed session as orphaned.
   let settledCleanly = false
+  // Guards against registering more than one 'close' listener per session.
+  let closeListenerArmed = false
 
   function clearIdleTimer(): void {
     if (idleTimer) {
@@ -124,11 +126,16 @@ export function createMppSessionHandler(opts: MppSessionHandlerOptions): Request
     if (typeof idleTimer.unref === 'function') idleTimer.unref()
   }
 
-  // `record` lives only in this instance's memory. Any host that can evict
-  // and recreate this handler between requests loses it even though `commit`
-  // persisted it to `innerStore` — so any path that reads `record` must first
-  // try to reload it from the store. Never overwrites an in-memory record
-  // that is already set.
+  // Unlike the Hono adapter, `innerStore` here is always a fresh
+  // `Store.memory()` created inside this closure (there is no
+  // `sessionStore` option to inject an externally-owned store) — so it does
+  // NOT survive this handler being evicted and recreated; `record` and
+  // `innerStore` are lost together. This re-read only protects against
+  // `record` and `innerStore` disagreeing within a single handler's
+  // lifetime, which the current code never lets happen (both are cleared
+  // together on DELETE) — kept for parity with the Hono adapter and as a
+  // defensive read against future changes, not as a claim that it survives
+  // eviction. Never overwrites an in-memory record that is already set.
   async function loadPersistedRecord(): Promise<VerifiedVoucherRecord | null> {
     if (record) return record
     try {
@@ -152,6 +159,7 @@ export function createMppSessionHandler(opts: MppSessionHandlerOptions): Request
     await loadPersistedRecord()
     if (!sessionOpened || settledCleanly) return
     sessionOpened = false
+    closeListenerArmed = false
     clearIdleTimer()
 
     const cumulativeAmount = record ? (Number(record.amount) / 1e7).toFixed(7) : '0.0000000'
@@ -347,6 +355,7 @@ export function createMppSessionHandler(opts: MppSessionHandlerOptions): Request
         voucherCount = 0
         record = null
         await innerStore.delete(voucherRecordKey)
+        closeListenerArmed = false
         clearIdleTimer()
         return
       }
@@ -377,20 +386,12 @@ export function createMppSessionHandler(opts: MppSessionHandlerOptions): Request
       // Payment verified. Detect connection teardown so a client crash mid-
       // session flags the channel for the reconciler instead of leaking
       // in-memory state and leaving the Supabase row stuck `open`.
-      //
-      // A session's vouchers each arrive as their own HTTP request — possibly
-      // each over its own connection, not necessarily a single one reused for
-      // the whole session — so a listener must be attached per request, not
-      // once per session. `req` is unique per request, so attaching a fresh
-      // listener here every time is safe (no risk of stacking duplicates on
-      // the same object). Node fires 'close' on `req` after every completed
-      // request-response cycle, not only when the client disconnects before a
-      // response is sent, so `res.writableEnded` distinguishes a normal
-      // completion (skip) from a genuine mid-request drop (flag it).
-      req.on('close', () => {
-        if (res.writableEnded) return
-        void flagOrphan('connection-closed')
-      })
+      if (!closeListenerArmed) {
+        closeListenerArmed = true
+        req.on('close', () => {
+          void flagOrphan('connection-closed')
+        })
+      }
 
       next()
     } catch (err) {
