@@ -1572,7 +1572,7 @@ mod tests {
         let env = Env::default();
         let admin = Address::generate(&env);
         let (_, agent_pk) = gen_keypair(&env);
-        let allowlist = soroban_sdk::Map::new(&env);
+        let allowlist = soroban_sdk::Map::<Address, i128>::new(&env);
         let vault_id = env.register(
             AgentVault,
             (admin.clone(), agent_pk, 5_000_000_i128, allowlist, 10_000_u32, 0_i128),
@@ -1625,7 +1625,7 @@ mod tests {
         let env = Env::default();
         let admin = Address::generate(&env);
         let (_, agent_pk) = gen_keypair(&env);
-        let allowlist = soroban_sdk::Map::new(&env);
+        let allowlist = soroban_sdk::Map::<Address, i128>::new(&env);
         let vault_id = env.register(
             AgentVault,
             (admin.clone(), agent_pk, 5_000_000_i128, allowlist, 10_000_u32, 0_i128),
@@ -1676,7 +1676,7 @@ mod tests {
         let env = Env::default();
         let admin = Address::generate(&env);
         let (_, agent_pk) = gen_keypair(&env);
-        let allowlist = soroban_sdk::Map::new(&env);
+        let allowlist = soroban_sdk::Map::<Address, i128>::new(&env);
         let vault_id = env.register(
             AgentVault,
             (admin, agent_pk, 5_000_000_i128, allowlist, 10_000_u32, 0_i128),
@@ -1694,7 +1694,7 @@ mod tests {
         let env = Env::default();
         let admin = Address::generate(&env);
         let (_, agent_pk) = gen_keypair(&env);
-        let allowlist = soroban_sdk::Map::new(&env);
+        let allowlist = soroban_sdk::Map::<Address, i128>::new(&env);
         let vault_id = env.register(
             AgentVault,
             (admin, agent_pk, 5_000_000_i128, allowlist, 10_000_u32, 0_i128),
@@ -1723,7 +1723,7 @@ mod tests {
         let env = Env::default();
         let admin = Address::generate(&env);
         let (_, agent_pk) = gen_keypair(&env);
-        let allowlist = soroban_sdk::Map::new(&env);
+        let allowlist = soroban_sdk::Map::<Address, i128>::new(&env);
         let vault_id = env.register(
             AgentVault,
             (admin.clone(), agent_pk, 5_000_000_i128, allowlist, 10_000_u32, 0_i128),
@@ -1861,7 +1861,7 @@ mod tests {
         let (_, agent_pk) = gen_keypair(&env);
         let vault_id = env.register(
             AgentVault,
-            (admin, agent_pk, 5_000_000_i128, soroban_sdk::Map::new(&env), 10_000_u32, 0_i128),
+            (admin, agent_pk, 5_000_000_i128, soroban_sdk::Map::<Address, i128>::new(&env), 10_000_u32, 0_i128),
         );
         let client = AgentVaultClient::new(&env, &vault_id);
 
@@ -2033,7 +2033,7 @@ mod tests {
         let (_, agent_pk) = gen_keypair(&env);
         let vault_id = env.register(
             AgentVault,
-            (admin, agent_pk, 5_000_000_i128, soroban_sdk::Map::new(&env), 10_000_u32, 0_i128),
+            (admin, agent_pk, 5_000_000_i128, soroban_sdk::Map::<Address, i128>::new(&env), 10_000_u32, 0_i128),
         );
         let client = AgentVaultClient::new(&env, &vault_id);
 
@@ -2188,7 +2188,7 @@ mod tests {
         let (_, agent_pk) = gen_keypair(&env);
         let vault_id = env.register(
             AgentVault,
-            (admin, agent_pk, 5_000_000_i128, Map::new(&env), 10_000_u32, 0_i128),
+            (admin, agent_pk, 5_000_000_i128, Map::<Address, i128>::new(&env), 10_000_u32, 0_i128),
         );
         let client = AgentVaultClient::new(&env, &vault_id);
 
@@ -2286,7 +2286,7 @@ mod tests {
         let (_, agent_pk) = gen_keypair(&env);
         let vault_id = env.register(
             AgentVault,
-            (admin, agent_pk, 5_000_000_i128, soroban_sdk::Map::new(&env), 10_000_u32, 0_i128),
+            (admin, agent_pk, 5_000_000_i128, soroban_sdk::Map::<Address, i128>::new(&env), 10_000_u32, 0_i128),
         );
         let client = AgentVaultClient::new(&env, &vault_id);
 
@@ -2366,7 +2366,7 @@ mod tests {
         let (_, agent_pk) = gen_keypair(&env);
         let vault_id = env.register(
             AgentVault,
-            (admin, agent_pk, 5_000_000_i128, Map::new(&env), 10_000_u32, 9_000_000_i128),
+            (admin, agent_pk, 5_000_000_i128, Map::<Address, i128>::new(&env), 10_000_u32, 9_000_000_i128),
         );
         let client = AgentVaultClient::new(&env, &vault_id);
         env.mock_all_auths();
@@ -2569,7 +2569,7 @@ mod tests {
         let env = Env::default();
         let admin = Address::generate(&env);
         let (_, agent_pk) = gen_keypair(&env);
-        let allowlist = Map::new(&env);
+        let allowlist = Map::<Address, i128>::new(&env);
 
         env.register(
             AgentVault,
@@ -2625,7 +2625,7 @@ mod tests {
         let env = Env::default();
         let admin = Address::generate(&env);
         let (_, agent_pk) = gen_keypair(&env);
-        let allowlist = Map::new(&env);
+        let allowlist = Map::<Address, i128>::new(&env);
 
         let vault_id = env.register(
             AgentVault,
