@@ -176,7 +176,7 @@ app.get('/price', async (req, res) => {
 
             <Section id="manifest" icon={Search} title="Manifest Standard">
               <p>
-                Every provider serves <InlineCode>/.well-known/routedock.json</InlineCode>. Provider adapters sign the manifest with <InlineCode>payeeSecretKey</InlineCode> using Ed25519 (<InlineCode>signature_version: "2"</InlineCode>). RouteDock clients fetch the manifest, validate it against the JSON Schema (using <InlineCode>@cfworker/json-schema</InlineCode>, draft-07), and verify the signature before making any payment.
+                Every provider serves <InlineCode>/.well-known/routedock.json</InlineCode>. Provider adapters sign the manifest with <InlineCode>payeeSecretKey</InlineCode> using Ed25519 (<InlineCode>{'signature_version: "2"'}</InlineCode>). RouteDock clients fetch the manifest, validate it against the JSON Schema (using <InlineCode>@cfworker/json-schema</InlineCode>, draft-07), and verify the signature before making any payment.
               </p>
               <Code>{JSON.stringify(DOCS_MANIFEST_EXAMPLE, null, 2)}</Code>
               <p>
