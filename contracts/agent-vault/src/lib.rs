@@ -2366,7 +2366,7 @@ mod tests {
         let (_, agent_pk) = gen_keypair(&env);
         let vault_id = env.register(
             AgentVault,
-            (admin, agent_pk, 5_000_000_i128, Map::<Address, i128>::new(&env), 10_000_u32, 9_000_000_i128),
+            (admin.clone(), agent_pk, 5_000_000_i128, Map::<Address, i128>::new(&env), 10_000_u32, 9_000_000_i128),
         );
         let client = AgentVaultClient::new(&env, &vault_id);
         env.mock_all_auths();
