@@ -93,9 +93,11 @@ test('X402Client - malformed X-Payment-Requirements (not base64) rejects with Ro
       },
       (err: any) => {
         assert.ok(err instanceof RouteDockManifestError, 'should be RouteDockManifestError')
+        assert.equal(err.message, '402 X-Payment-Requirements header is malformed')
         assert.equal(err.code, 'MANIFEST')
         assert.equal(err.retryable, false)
         assert.ok(err.cause instanceof Error, 'cause should be the original decode error')
+        assert.equal((err.cause as Error).message, 'Invalid payment required header')
         return true
       },
     )
@@ -122,9 +124,10 @@ test('X402Client - malformed X-Payment-Requirements (base64 of non-JSON) rejects
       },
       (err: any) => {
         assert.ok(err instanceof RouteDockManifestError, 'should be RouteDockManifestError')
+        assert.equal(err.message, '402 X-Payment-Requirements header is malformed')
         assert.equal(err.code, 'MANIFEST')
         assert.equal(err.retryable, false)
-        assert.ok(err.cause instanceof Error, 'cause should be the original SyntaxError')
+        assert.ok(err.cause instanceof SyntaxError, 'cause should be the original SyntaxError')
         return true
       },
     )
