@@ -437,6 +437,19 @@ export class MppSessionClient {
 
         const concurrency = Math.max(1, options?.concurrency ?? 1)
 
+        // close() flips this guard, whether the caller invoked it or the
+        // maxDurationMs lifetime guard fired it. Once set, the stream must stop
+        // issuing vouchers: every doFetch() signs a new cumulative via
+        // mppx.fetch, and a value signed after close() would sit above the
+        // cumulative close() is committing on-chain. Throws
+        // RouteDockChannelStateError('session closed') so the consumer can tell
+        // why the stream ended.
+        const assertOpen = (): void => {
+          if (closed) {
+            throw new RouteDockChannelStateError('session closed')
+          }
+        }
+
         // Shared fetch-one helper — retries on transient errors.
         const doFetch = (): Promise<unknown> =>
           withRetry(async () => {
@@ -472,6 +485,9 @@ export class MppSessionClient {
           // The next voucher is not issued until the provider returns HTTP 200
           // for the current one, preventing out-of-order sequence numbers.
           while (true) {
+            // A closed session must not run checkSpend() or issue another
+            // voucher, even if the consumer keeps pulling the iterator.
+            assertOpen()
             await checkSpend()
             const data = await doFetch()
             vouchersIssued++
@@ -484,11 +500,16 @@ export class MppSessionClient {
           // concurrent vouchers.
           const queue: Array<Promise<unknown>> = []
           for (let i = 0; i < concurrency; i++) {
+            // Stop filling the window as soon as the session is closed.
+            assertOpen()
             await checkSpend()
             queue.push(doFetch())
           }
 
           while (true) {
+            // Checked before the shift and the refill below, so a closed
+            // session neither yields nor queues a new doFetch().
+            assertOpen()
             const data = await queue.shift()!
             // Replenish the window immediately after draining one slot.
             await checkSpend()
