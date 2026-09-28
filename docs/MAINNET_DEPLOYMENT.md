@@ -106,7 +106,7 @@ Call `client.preflight(manifest)` explicitly to validate a manifest's asset trus
 
 ### Mandatory `USDC_ASSET_CONTRACT` on Mainnet
 
-> ⚠️ **MANDATORY CONFIGURATION:** `USDC_ASSET_CONTRACT` is **required** on mainnet for both providers and the agent. In `@routedock/routedock`, `resolveAssetContract` throws an error if `USDC_ASSET_CONTRACT` is missing on mainnet because only testnet has a default fallback contract address.
+> ⚠️ **MANDATORY CONFIGURATION:** `USDC_ASSET_CONTRACT` is **required** on mainnet for both providers and the agent. `resolveAssetContract` in `apps/provider-a/src/worker.ts` and `apps/provider-b/src/config.ts` throws an error if `USDC_ASSET_CONTRACT` is missing on mainnet, because only testnet has a default fallback contract address — each provider refuses to serve on mainnet without it, and `/health` returns 503 naming `USDC_ASSET_CONTRACT` as missing.
 
 Obtain or deploy the Stellar Asset Contract (SAC) wrapper ID for mainnet USDC and record it as `USDC_ASSET_CONTRACT`.
 
