@@ -138,13 +138,13 @@ app.use('/stream', routedock({
 
 ## React Integration
 
-> **Warning:** these hooks create a RouteDockClient in the browser, so the wallet secret and any commitmentSecret are readable by anyone who loads the page.
+> > **Warning:** These hooks create a RouteDockClient in the browser, so the wallet secret and any commitmentSecret are readable by anyone who loads the page.
 >
-> Next.js inlines every public environment variable into the client bundle at build time, so never put a Stellar secret in one.
+> Next.js inlines every `NEXT_PUBLIC_*` variable into the client bundle at build time, so never put a Stellar secret in one.
 >
 > Only use these hooks with a dedicated, low-balance testnet key, and spendCap does not protect a key that has leaked.
 >
-> For production or mainnet, keep RouteDockClient on the server (a route handler or server action) and read the key from a non-public variable such as AGENT_SECRET, as the Agent Usage section does.
+> For production or mainnet, keep RouteDockClient on the server (a route handler or server action) and read the key from a non-public variable such as `AGENT_SECRET`, as the Agent Usage section does.
 
 `@routedock/sdk/react` provides hooks for client construction, payments, sessions, and live tx log subscription. Wrap your app with `RouteDockProvider`:
 
