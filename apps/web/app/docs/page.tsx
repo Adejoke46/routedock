@@ -96,8 +96,8 @@ import { RouteDockClient } from '@routedock/routedock/client'        // client o
 import { routedock } from '@routedock/routedock/provider'             // Express middleware + handlers
 import { routedockHono } from '@routedock/routedock/provider/hono'    // Hono middleware
 import { routedockFastify } from '@routedock/routedock/provider/fastify' // Fastify plugin
-import { useRouteDock } from '@routedock/routedock/react'             // React hooks
-import { MockRouteDockClient } from '@routedock/routedock/testing'    // Test utilities
+import { useRouteDockClient, usePay } from '@routedock/routedock/react' // React hooks
+import { createMockRoutedockMiddleware } from '@routedock/routedock/testing' // Test utilities
 import schema from '@routedock/routedock/schema'                      // Canonical manifest JSON Schema`}</Code>
               <p>
                 Peer dependencies (<InlineCode>express</InlineCode>, <InlineCode>hono</InlineCode>, <InlineCode>fastify</InlineCode>, <InlineCode>react</InlineCode>) are all optional — only install what your application imports.
@@ -105,7 +105,9 @@ import schema from '@routedock/routedock/schema'                      // Canonic
             </Section>
 
             <Section id="agent-client" icon={Bot} title="Agent Client">
-              <p>The agent client wraps supported payment modes behind a clean, intuitive API.</p>
+              <p>
+                The agent client handles <InlineCode>x402</InlineCode> and <InlineCode>mpp-charge</InlineCode> through <InlineCode>pay()</InlineCode> and channels through <InlineCode>openSession()</InlineCode>.
+              </p>
               <Code>{`import { RouteDockClient } from '@routedock/routedock'
 import { Keypair } from '@stellar/stellar-sdk'
 
@@ -141,8 +143,8 @@ const closeResult = await session.close()
               <p>
                 Middleware adapters sign and serve the manifest at <InlineCode>/.well-known/routedock.json</InlineCode>, verify payments across supported modes, and settle on-chain.
               </p>
-              <Code>{`// Express
-import express from 'express'
+              <p><strong>Express:</strong></p>
+              <Code>{`import express from 'express'
 import { routedock } from '@routedock/routedock/provider'
 
 const app = express()
@@ -162,12 +164,59 @@ app.use('/price', routedock({
 }))
 
 app.get('/price', async (req, res) => {
-  // This only runs after payment is verified
   res.json({ price: '0.199', pair: 'XLM/USDC' })
 })`}</Code>
-              <p>
-                First-class adapters are also available for Hono (<InlineCode>@routedock/routedock/provider/hono</InlineCode>) and Fastify (<InlineCode>@routedock/routedock/provider/fastify</InlineCode>).
+
+              <p className="mt-4"><strong>Hono (Cloudflare Workers / Node):</strong></p>
+              <p className="text-sm text-[var(--text-muted)]">
+                Mount at <InlineCode>&apos;*&apos;</InlineCode> so RouteDock serves the signed manifest at <InlineCode>/.well-known/routedock.json</InlineCode> automatically (as mounted in <InlineCode>apps/provider-a/src/worker.ts</InlineCode>):
               </p>
+              <Code>{`import { Hono } from 'hono'
+import { routedockHono } from '@routedock/routedock/provider/hono'
+
+const app = new Hono()
+app.use(
+  '*',
+  routedockHono({
+    modes: ['x402', 'mpp-charge'],
+    pricing: { x402: '0.001', 'mpp-charge': '0.0008' },
+    asset: 'USDC',
+    assetContract: process.env.USDC_ASSET_CONTRACT,
+    payee: process.env.STELLAR_PAYEE_ADDRESS,
+    payeeSecretKey: process.env.STELLAR_PAYEE_SECRET,
+    network: process.env.STELLAR_NETWORK,
+    manifest,
+    onSettled: async (txHash, amount, mode, payer) => {
+      console.log(\`Settled: \${mode} \${amount} USDC — \${txHash}\`)
+    },
+  })
+)
+
+app.get('/price', (c) => c.json({ price: '0.199', pair: 'XLM/USDC' }))`}</Code>
+
+              <p className="mt-4"><strong>Fastify:</strong></p>
+              <Code>{`import Fastify from 'fastify'
+import { routedockFastify } from '@routedock/routedock/provider/fastify'
+
+const fastify = Fastify()
+await fastify.register(
+  routedockFastify({
+    modes: ['x402', 'mpp-charge'],
+    pricing: { x402: '0.001', 'mpp-charge': '0.0008' },
+    asset: 'USDC',
+    assetContract: process.env.USDC_ASSET_CONTRACT,
+    payee: process.env.STELLAR_PAYEE_ADDRESS,
+    payeeSecretKey: process.env.STELLAR_PAYEE_SECRET,
+    network: process.env.STELLAR_NETWORK,
+    manifest,
+    onSettled: async (txHash, amount, mode) => {
+      console.log(\`Settled: \${mode} \${amount} USDC — \${txHash}\`)
+    },
+  })
+)
+
+fastify.get('/price', async () => ({ price: '0.199', pair: 'XLM/USDC' }))`}</Code>
+
               <p>
                 On testnet, x402 uses a local <InlineCode>ExactStellarFacilitatorScheme</InlineCode> —
                 no third-party dependency. On mainnet, it routes to the OpenZeppelin hosted facilitator automatically.
@@ -176,16 +225,18 @@ app.get('/price', async (req, res) => {
 
             <Section id="manifest" icon={Search} title="Manifest Standard">
               <p>
-                Every provider serves <InlineCode>/.well-known/routedock.json</InlineCode>. Provider adapters sign the manifest with <InlineCode>payeeSecretKey</InlineCode> using Ed25519 (<InlineCode>{'signature_version: "2"'}</InlineCode>). RouteDock clients fetch the manifest, validate it against the JSON Schema (using <InlineCode>@cfworker/json-schema</InlineCode>, draft-07), and verify the signature before making any payment.
+                Every provider serves <InlineCode>/.well-known/routedock.json</InlineCode>. Provider adapters sign the manifest with <InlineCode>payeeSecretKey</InlineCode> using Ed25519. Clients validate the manifest against the JSON Schema (draft-07 via <InlineCode>@cfworker/json-schema</InlineCode>) and reject any manifest that fails schema validation or whose <InlineCode>signature_version</InlineCode> is not <InlineCode>&quot;2&quot;</InlineCode> (see <InlineCode>packages/sdk/src/manifest/sign.ts</InlineCode> line 97) before making any payment.
               </p>
               <Code>{JSON.stringify(DOCS_MANIFEST_EXAMPLE, null, 2)}</Code>
               <p>
-                The canonical JSON Schema is exported from <InlineCode>@routedock/routedock/schema</InlineCode> (source file at <InlineCode>packages/sdk/src/schemas/routedock.schema.json</InlineCode>). Providers can import this schema to validate manifests in automated test suites. Modes retained solely for backwards compatibility can be flagged in <InlineCode>deprecated_modes</InlineCode>.
+                The canonical JSON Schema is exported from <InlineCode>@routedock/routedock/schema</InlineCode> (source file at <InlineCode>packages/sdk/src/schemas/routedock.schema.json</InlineCode>). Providers can validate manifests in automated test suites (see <InlineCode>apps/provider-a/src/__tests__/manifest.test.ts</InlineCode> for the canonical test pattern with Ajv). Modes retained solely for backwards compatibility can be flagged in <InlineCode>deprecated_modes</InlineCode>.
               </p>
             </Section>
 
             <Section id="mode-selection" icon={Terminal} title="Mode Selection">
-              <p>Deterministic, manifest-driven mode selection per Section 6.3 of ROUTEDOCK_MASTER.md:</p>
+              <p>
+                Deterministic, manifest-driven mode selection (implemented in <InlineCode>packages/sdk/src/client/ModeRouter.ts</InlineCode>):
+              </p>
               <ol className="list-decimal list-inside space-y-2 pl-1">
                 <li><strong>Forced mode override:</strong> If <InlineCode>{'{ forceMode }'}</InlineCode> is specified, that mode is used directly (throws <InlineCode>RouteDockNoSupportedModeError</InlineCode> if unsupported by the provider, and logs a warning if deprecated).</li>
                 <li><strong>Active before deprecated:</strong> Modes declared in <InlineCode>deprecated_modes</InlineCode> are only evaluated as a fallback if no active supported mode matches the criteria.</li>
@@ -208,7 +259,6 @@ app.get('/price', async (req, res) => {
                 Note: <InlineCode>client.pay()</InlineCode> only executes discrete payments (<InlineCode>x402</InlineCode> or <InlineCode>mpp-charge</InlineCode>). If a session mode is selected for discrete payment, it throws an error instructing the caller to use <InlineCode>client.openSession()</InlineCode>.
               </p>
             </Section>
-
 
             <Section id="session-lifecycle" icon={Terminal} title="Session Lifecycle (MPP Channel)">
               <p>The MPP session mode uses the <InlineCode>stellar-experimental/one-way-channel</InlineCode> Soroban contract.</p>
