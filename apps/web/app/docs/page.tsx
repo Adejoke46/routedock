@@ -148,6 +148,7 @@ const closeResult = await session.close()
 import { routedock } from '@routedock/routedock/provider'
 
 const app = express()
+
 app.use('/price', routedock({
   modes: ['x402', 'mpp-charge'],
   pricing: { x402: '0.001', 'mpp-charge': '0.0008' },
@@ -164,6 +165,7 @@ app.use('/price', routedock({
 }))
 
 app.get('/price', async (req, res) => {
+  // This only runs after payment is verified
   res.json({ price: '0.199', pair: 'XLM/USDC' })
 })`}</Code>
 
@@ -240,11 +242,12 @@ fastify.get('/price', async () => ({ price: '0.199', pair: 'XLM/USDC' }))`}</Cod
               <ol className="list-decimal list-inside space-y-2 pl-1">
                 <li><strong>Forced mode override:</strong> If <InlineCode>{'{ forceMode }'}</InlineCode> is specified, that mode is used directly (throws <InlineCode>RouteDockNoSupportedModeError</InlineCode> if unsupported by the provider, and logs a warning if deprecated).</li>
                 <li><strong>Active before deprecated:</strong> Modes declared in <InlineCode>deprecated_modes</InlineCode> are only evaluated as a fallback if no active supported mode matches the criteria.</li>
-                <li><strong>Sustained sessions (<InlineCode>client.openSession</InlineCode>):</strong> When <InlineCode>{'{ sustained: true }'}</InlineCode> or <InlineCode>{'{ session: true }'}</InlineCode> is passed, evaluates session modes based on <InlineCode>transport</InlineCode>:
+                <li><strong>Session modes:</strong> With <InlineCode>{'{ sustained: true }'}</InlineCode> or <InlineCode>{'{ session: true }'}</InlineCode>, selection picks a session mode by <InlineCode>transport</InlineCode>:
                   <ul className="list-disc list-inside space-y-1 pl-4 mt-1">
                     <li><InlineCode>{'transport: \'websocket\''}</InlineCode> prefers <InlineCode>mpp-session-ws</InlineCode>, falling back to <InlineCode>mpp-session</InlineCode>.</li>
                     <li><InlineCode>{'transport: \'sse\''}</InlineCode> (or default) prefers <InlineCode>mpp-session</InlineCode>, falling back to <InlineCode>mpp-session-ws</InlineCode>.</li>
                   </ul>
+                  To open one, call <InlineCode>{'client.openSession(url, { mode })'}</InlineCode>. It uses the mode you pass and defaults to <InlineCode>mpp-session</InlineCode>.
                 </li>
                 <li><strong>Cost optimization:</strong> When <InlineCode>{'optimize: \'cost\''}</InlineCode> is set, the client compares amounts across candidate per-request modes (<InlineCode>x402</InlineCode>, <InlineCode>mpp-charge</InlineCode>) and picks the cheapest. If <InlineCode>budget_per_request</InlineCode> is provided and all candidates exceed it, throws <InlineCode>RouteDockPolicyRejectError</InlineCode>.</li>
                 <li><strong>Default discrete precedence (<InlineCode>client.pay</InlineCode>):</strong>
