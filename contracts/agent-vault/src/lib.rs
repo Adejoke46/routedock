@@ -1237,14 +1237,25 @@ mod tests {
     /// Build a vault whose allowlist contains a single payee, returning the
     /// client, the vault id, the admin address and the allowlisted payee.
     fn setup_settlement(env: &Env) -> (AgentVaultClient<'_>, Address, Address, Address) {
-        let vault_id = env.register(AgentVault, ());
-        let client = AgentVaultClient::new(env, &vault_id);
-
         let admin = Address::generate(env);
         let (_, agent_pk) = gen_keypair(env);
         let provider_a = Address::generate(env);
+
+        // The vault is configured by its one-time constructor, so the config is
+        // passed at registration (same pattern as `setup` above).
         let allowlist = Map::from_array(env, [(provider_a.clone(), 5_000_000_i128)]);
-        client.initialize(&admin, &agent_pk, &5_000_000_i128, &allowlist, &10_000_u32, &0_i128);
+        let vault_id = env.register(
+            AgentVault,
+            (
+                admin.clone(),
+                agent_pk,
+                5_000_000_i128,
+                allowlist,
+                10_000_u32,
+                0_i128,
+            ),
+        );
+        let client = AgentVaultClient::new(env, &vault_id);
 
         (client, vault_id, admin, provider_a)
     }
