@@ -138,7 +138,7 @@ app.use('/stream', routedock({
 
 ## React Integration
 
-> > **Warning:** These hooks create a RouteDockClient in the browser, so the wallet secret and any commitmentSecret are readable by anyone who loads the page.
+> **Warning:** These hooks create a RouteDockClient in the browser, so the wallet secret and any commitmentSecret are readable by anyone who loads the page.
 >
 > Next.js inlines every `NEXT_PUBLIC_*` variable into the client bundle at build time, so never put a Stellar secret in one.
 >
