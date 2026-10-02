@@ -143,7 +143,7 @@ export default async function LandingPage() {
 
           <FadeInUp delay={0.18}>
             <p className="text-center mt-12 text-lg font-semibold text-[var(--text-primary)]">
-              RouteDock solves all four.
+              RouteDock solves all three.
             </p>
           </FadeInUp>
         </div>
@@ -196,8 +196,8 @@ export default async function LandingPage() {
             <FadeInUp delay={0.18}>
               <ModeCard
                 mode="mpp-session-ws"
-                title="Pay per streamed message"
-                description="The same channel as MPP session, streamed over a single WebSocket connection. Session vouchers cover every message on the socket — ideal for realtime feeds."
+                title="Pay per stream"
+                description="The same channel as MPP session, streamed over a single WebSocket connection. One voucher is signed before the upgrade and covers every message on the socket — frames are not billed one by one. Ideal for realtime feeds."
                 icon={<Radio className="h-5 w-5" />}
                 stats="0.0001 USDC/voucher · 1 WebSocket, 2 on-chain txs"
               />
@@ -225,7 +225,7 @@ export default async function LandingPage() {
                 icon: <GitBranch className="h-5 w-5" />,
                 title: 'Provider adds middleware + serves routedock.json',
                 detail:
-                  'One middleware call. Adapters sign and serve the manifest, and clients validate before paying. Providers declare their modes, pricing, and payee address once.',
+                  'One middleware call for Hono on Cloudflare Workers, Express, or Fastify. Adapters sign and serve the manifest, and clients validate before paying. Providers declare their modes, pricing, and payee address once.',
               },
               {
                 step: '02',
