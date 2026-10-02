@@ -33,7 +33,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       AGENT_SECRET: ${{ secrets.AGENT_SECRET }}
-      COMMITMENT_SECRET: ${{ secrets.AGENT_SECRET }}
+      COMMITMENT_SECRET: ${{ secrets.COMMITMENT_SECRET }}
       PROVIDER_A_URL: http://localhost:8801
       PROVIDER_B_URL: http://localhost:8802
 
