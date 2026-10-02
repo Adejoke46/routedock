@@ -34,6 +34,7 @@ jobs:
     env:
       AGENT_SECRET: ${{ secrets.AGENT_SECRET }}
       COMMITMENT_SECRET: ${{ secrets.COMMITMENT_SECRET }}
+      E2E_PAYEE_SECRET: ${{ secrets.E2E_PAYEE_SECRET }}
       PROVIDER_A_URL: http://localhost:8801
       PROVIDER_B_URL: http://localhost:8802
 
@@ -63,10 +64,10 @@ jobs:
         run: |
           set -euo pipefail
           STELLAR_PAYEE_ADDRESS=$(pnpm --filter @routedock/routedock exec node --input-type=module -e \
-            "import { Keypair } from '@stellar/stellar-sdk'; console.log(Keypair.fromSecret(process.env.AGENT_SECRET).publicKey())")
+            "import { Keypair } from '@stellar/stellar-sdk'; console.log(Keypair.fromSecret(process.env.E2E_PAYEE_SECRET).publicKey())")
           COMMITMENT_PUBLIC_KEY=$(COMMITMENT_SECRET="$COMMITMENT_SECRET" pnpm --filter @routedock/routedock exec node --input-type=module -e \
             "import { Keypair } from '@stellar/stellar-sdk'; console.log(Keypair.fromSecret(process.env.COMMITMENT_SECRET).publicKey())")
-          export STELLAR_PAYEE_SECRET="$AGENT_SECRET"
+          export STELLAR_PAYEE_SECRET="$E2E_PAYEE_SECRET"
           export STELLAR_PAYEE_ADDRESS
           export COMMITMENT_PUBLIC_KEY
           export CHANNEL_CONTRACT_ID=CCK4XOW3YKQUEZFONUTINKMSNW7SNMRQZURME5U3UP7E6WNGK7UHUCAH
